@@ -11,7 +11,7 @@
 		<h2>Admin Login</h2>
 	</div>
 	
-	<form method="post" action="admin_manage.php">
+	<form method="post" action="login2.php">
 
 		<?php include('errors.php'); ?>
 

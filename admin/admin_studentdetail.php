@@ -1,3 +1,22 @@
+<?php
+session_start();
+
+if (!isset($_SESSION['username'])) {
+    $_SESSION['msg'] = "You must log in first";
+    header('location: login2.php');
+    exit();
+}
+
+if (isset($_GET['del'])) {
+    $conn = mysqli_connect('localhost', 'root', '', 'dbms');
+    $id = mysqli_real_escape_string($conn, $_GET['del']);
+    $query = "DELETE FROM complaints WHERE Student_Id = '$id'";
+    mysqli_query($conn, $query);
+    mysqli_close($conn);
+    header('location: admin_studentdetail.php');
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -9,7 +28,7 @@ table, th, td {
 }
 th, td {
   padding: 5px;
-  text-align: left;    
+  text-align: left;
 }
 body {
   margin: 0;
@@ -32,7 +51,7 @@ body {
   padding: 16px;
   text-decoration: none;
 }
- 
+
 .sidebar a.active {
   background-color: #4CAF50;
   color: white;
@@ -77,84 +96,49 @@ div.content {
 </div>
 
 <div class="content">
-
-<?php
-if(isset($_GET['del']))
-{
-  $id=intval($_GET['del']);
-  $adn="delete from complaints where Student_Id=?";
-    $stmt= $mysqli->prepare($adn);
-    $stmt->bind_param('i',$id);
-        $stmt->execute();
-        $stmt->close();    
-        echo "<script>alert('Data Deleted');</script>" ;
-}
-?>
-
+<h2 class="page-title">Student Complaints Table</h2>
 <?php
 $conn = mysqli_connect("localhost", "root", "", "dbms");
-$query = "
-    SELECT aa.Student_Id AS Student_Id, aa.roomno, aa.phoneno, aa.complaint_date , aa.complaint_type, aa.description, bb.staffname
-    FROM complaints AS aa 
-    INNER JOIN staff AS bb
-    ON aa.complaint_type = bb.department ";
-$result = mysqli_query($conn, $query) or die( mysqli_error($conn));
-
-echo '
-<div class="ts-main-content">
-    <div class="content-wrapper">
-      <div class="container-fluid">
-        <div class="row">
-          <div class="col-md-12">
-            <h2 class="page-title">Student Complaints Table</h2>
-            <div class="panel panel-default">
-              <div class="panel-heading">Student Complaints</div>
-              <div class="panel-body">
-                <table id="zctb" class="display table table-striped table-bordered table-hover" cellspacing="0" width="100%">
-                  <thead>
-                      <tr>
-                          <th>Student Id</th>
-                          <th>Room No</th>
-                          <th>Phone No</th>
-                          <th>Complaint Date</th>
-                          <th>Complaint Type</th>
-                          <th>Description</th>
-                          <th>Staff Name</th>
-                          <th>Action</th>
-                          </tr>
-                  </thead>
-                  <tfoot>
-                      <tr>
-                          <th>Student Id</th>
-                          <th>Room No</th>
-                          <th>Phone No</th>
-                          <th>Complaint Date</th>
-                          <th>Complaint Type</th>
-                          <th>Description</th>
-                          <th>Staff Name</th>
-                          <th>Action</th>
-                      </tr>
-                  </tfoot>
-                  <tbody>';
-                
-
-
-while($row = mysqli_fetch_array($result)) {
-  echo '<td>'.$row['Student_Id'].'</td>';
-    echo '<td>'.$row['roomno'].'</td>';
-    echo '<td>'.$row['phoneno'].'</td>';
-    echo '<td>'.$row['complaint_date'].'</td>';
-    echo '<td>'.$row['complaint_type'].'</td>';
-    echo '<td>'.$row['description'].'</td>';
-    echo '<td>'.$row['staffname'].'</td>';
-    echo "<td><a href='delete.php?id=".$row['Student_Id']."' onClick=\"javascript:return confirm('are you sure you want to delete this?');\">x</a></td><tr>";
-   
-  
+if (!$conn) {
+    die('Database connection failed: ' . mysqli_connect_error());
 }
-echo '
-        </tbody>
-    </table>';
+
+$query = "
+    SELECT c.Student_Id, c.roomno, c.phoneno, c.complaint_date, c.complaint_type, c.description, s.staffname
+    FROM complaints AS c
+    LEFT JOIN staff AS s
+    ON c.complaint_type = s.department
+    ORDER BY c.complaint_date DESC";
+$result = mysqli_query($conn, $query) or die(mysqli_error($conn));
 ?>
+<table id="zctb" cellspacing="0" width="100%">
+  <thead>
+    <tr>
+      <th>Student Id</th>
+      <th>Room No</th>
+      <th>Phone No</th>
+      <th>Complaint Date</th>
+      <th>Complaint Type</th>
+      <th>Description</th>
+      <th>Staff Name</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+<?php while ($row = mysqli_fetch_assoc($result)) { ?>
+    <tr>
+      <td><?php echo htmlspecialchars($row['Student_Id']); ?></td>
+      <td><?php echo htmlspecialchars($row['roomno']); ?></td>
+      <td><?php echo htmlspecialchars($row['phoneno']); ?></td>
+      <td><?php echo htmlspecialchars($row['complaint_date']); ?></td>
+      <td><?php echo htmlspecialchars($row['complaint_type']); ?></td>
+      <td><?php echo htmlspecialchars($row['description']); ?></td>
+      <td><?php echo htmlspecialchars($row['staffname']); ?></td>
+      <td><a href="delete.php?id=<?php echo urlencode($row['Student_Id']); ?>" onClick="return confirm('are you sure you want to delete this?');">x</a></td>
+    </tr>
+<?php } ?>
+  </tbody>
+</table>
 </div>
 <p> <a href="a.php?logout='1'" style="color: red;">logout</a> </p>
 
